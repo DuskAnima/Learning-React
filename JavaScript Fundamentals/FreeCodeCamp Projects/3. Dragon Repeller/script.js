@@ -22,23 +22,67 @@ const weapons = [
     { name: 'claw hammer', power: 50 },
     { name: 'sword', power: 100 }
 ];
+
+/*
+name, level, health, damage, weakness, spawn, place
+*/
 const monsters = [
     {
         name: "slime",
         level: 2,
-        health: 15
+        health: 15,
+        damage: ["attack"], // damage = can receive damage
+        weakness: ["fire", "thunder", "ice", "earthquake"], // weakness = is weak to (x1.5 dmg)
+        spawn: 50,
+        place: "cave"
     },
     {
         name: "fanged beast",
         level: 8,
-        health: 60
+        health: 60,
+        damage: ["attack", "ice"],
+        weakness: ["fire", "earthquake"],
+        spawn: 80,
+        place: "cave"
+    },
+    {
+        name: "winged beast",
+        level: 12,
+        health: 100,
+        damage: ["fire", "ice"],
+        weakness: ["thunder"],
+        spawn: 100,
+        place: "cave"
+    },
+    {
+        name: "skelleton",
+        level: 16,
+        health: 80,
+        damage: ["attack", "thunder", "ice", "earthquake"],
+        weakness: ["fire"],
+        spawn: 50,
+        place: "dragon lair"
+    },
+    {
+        name: "basilisk",
+        level: 22,
+        health: 150,
+        damage: ["attack"],
+        weakness: ["earthquake"],
+        spawn: 80,
+        place: "dragon lair"
     },
     {
         name: "dragon",
-        level: 20,
-        health: 300
+        level: 35,
+        health: 500,
+        damage: ["attack"],
+        weakness: [],
+        spawn: 100,
+        place: "dragon lair"
     }
 ]
+
 const locations = [
     {
         name: "town square",
@@ -114,6 +158,28 @@ function goStore() {
     update(locations[1]);
 }
 
+function randEnemy(selection) {
+    const caveMonsters = monsters.filter(monster => monster.place === "cave");
+    const lairMonsters = monsters.filter(monster => monster.place === "dragon lair");
+    const randNumber = Math.floor(Math.random() * 101);
+    if (selection === "cave") {
+        if (randNumber < caveMonsters[0].spawn) {
+            text.innerText = caveMonsters[0].name
+        } else if (randNumber < caveMonsters[1].spawn) {
+            text.innerText = caveMonsters[1].name
+        } else {
+            text.innerText = caveMonsters[2].name
+        }
+    } else {
+        if (randNumber < lairMonsters[0].spawn) {
+            text.innerText = lairMonsters[0].name
+        } else if (randNumber < lairMonsters[1].spawn) {
+            text.innerText = lairMonsters[1].name
+        } else {
+            text.innerText = lairMonsters[2].name
+        }
+    }
+}
 function goCave() {
     update(locations[2]);
 }
@@ -171,8 +237,23 @@ function fightBeast() {
     goFight();
 }
 
+function figthFlyingBeast() {
+    fighting = 3;
+    goFight();
+}
+
+function fightSkelleton() {
+    fighting = 4;
+    goFight();
+}
+
+function fightWerewolf() {
+    fighting = 5;
+    goFight();
+}
+
 function fightDragon() {
-    fighting = 2;
+    fighting = monsters.length - 1;
     goFight();
 }
 
@@ -198,7 +279,7 @@ function attack() {
     if (health <= 0) {
         lose();
     } else if (monsterHealth <= 0) {
-        if (fighting === 2) {
+        if (fighting === monsters.length - 1) {
             winGame();
         } else {
             defeatMonster();
