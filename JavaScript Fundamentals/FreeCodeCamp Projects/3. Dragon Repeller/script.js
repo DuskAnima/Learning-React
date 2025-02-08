@@ -6,8 +6,8 @@ let fighting;
 let monsterHealth;
 let inventory = ["stick"];
 let magic = [
-    {name: 'fire', get: true},
-    {name: 'thunder', get: true},
+    {name: 'fireball', get: false},
+    {name: 'thundershock', get: false},
     {name: 'earthquake', get: false}
 ];
 
@@ -20,7 +20,6 @@ let killedSkelleton = false;
 const button1 = document.querySelector('#button1');
 const button2 = document.querySelector("#button2");
 const button3 = document.querySelector("#button3");
-const button4 = document.createElement("button"); // 4th button, auxiliar.
 const text = document.querySelector("#text");
 const xpText = document.querySelector("#xpText");
 const healthText = document.querySelector("#healthText");
@@ -115,7 +114,7 @@ const locations = [
     },
     {
         name: "spell",
-        get "button text"() { return showSpells();},
+        "button text": [],
         "button functions": [fightSlime, fightBeast, goTown],
         text: "Choose a spell."
     },
@@ -166,6 +165,13 @@ function update(location) {
     button3.onclick = location["button functions"][2];
     text.innerHTML = location.text;
 
+}
+
+function button4(text, func){
+    const button4 = document.createElement("button"); // 4th button, auxiliar.
+    const controls = document.getElementById("controls"); 
+    button4.innerText = text;
+    controls.appendChild(button4)
 }
 
 function sleep(ms) {
@@ -238,12 +244,16 @@ function getMagic() { // set spells from de array magic "true", this is based on
 }
 
 function showSpells() {
-    return magic.filter(spell => spell.get).map(spell => spell.name) || ["No spells available"];
+    // Mapeamos todos los hechizos, y si están disponibles (get: true), asignamos su nombre, si no, asignamos "No spell"
+    let availableSpells = magic.map(spell => spell.get === true ? spell.name : "No spell");
+    // Asignamos el arreglo a los botones correspondientes
+    locations[2]["button text"] = availableSpells;
+    button4("go back")
 }
 
 function useMagic(spell) {
+    showSpells()
     update(locations[2]) //enters the spell menu
-
 
     text.innerText = "The " + monsters[fighting].name + " attacks.";
     text.innerText += " You attack it with your " + weapons[currentWeapon].name + ".";
