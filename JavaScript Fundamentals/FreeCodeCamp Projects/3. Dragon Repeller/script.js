@@ -6,6 +6,12 @@ let fighting;
 let monsterHealth;
 let inventory = ["stick"];
 
+let killedSlime = false
+let killedBeast = false
+let killedFlying = false
+let killedBasilisk = false
+let killedSkelleton = false
+
 const button1 = document.querySelector('#button1');
 const button2 = document.querySelector("#button2");
 const button3 = document.querySelector("#button3");
@@ -20,7 +26,12 @@ const weapons = [
     { name: 'stick', power: 5 },
     { name: 'dagger', power: 30 },
     { name: 'claw hammer', power: 50 },
-    { name: 'sword', power: 100 }
+    { name: 'mace', power: 80 },
+    { name: 'short sword', power: 100 },
+    { name: 'axe', power: 130 },
+    { name: 'big sword', power: 170 },
+    { name: 'great sword', power: 200 },
+    { name: 'dragon slayer', power: 300 }
 ];
 
 /*
@@ -38,8 +49,8 @@ const monsters = [
     },
     {
         name: "fanged beast",
-        level: 8,
-        health: 60,
+        level: 4,
+        health: 70,
         damage: ["attack", "ice"],
         weakness: ["fire", "earthquake"],
         spawn: 80,
@@ -47,8 +58,8 @@ const monsters = [
     },
     {
         name: "winged beast",
-        level: 12,
-        health: 100,
+        level: 10,
+        health: 110,
         damage: ["fire", "ice"],
         weakness: ["thunder"],
         spawn: 100,
@@ -86,8 +97,8 @@ const monsters = [
 const locations = [
     {
         name: "town square",
-        "button text": ["Go to store", "Go to cave", "Fight dragon"],
-        "button functions": [goStore, goCave, fightDragon],
+        "button text": ["Go to store", "Go to cave", "Go to dragon's lair"],
+        "button functions": [goStore, goCave, goLair],
         text: "You are in the town square. You see a sign that says \"Store\"."
     },
     {
@@ -137,7 +148,7 @@ const locations = [
 // initialize buttons
 button1.onclick = goStore;
 button2.onclick = goCave;
-button3.onclick = fightDragon;
+button3.onclick = goLair;
 
 function update(location) {
     monsterStats.style.display = "none";
@@ -148,6 +159,10 @@ function update(location) {
     button2.onclick = location["button functions"][1];
     button3.onclick = location["button functions"][2];
     text.innerHTML = location.text;
+
+}
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function goTown() {
@@ -158,44 +173,37 @@ function goStore() {
     update(locations[1]);
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function randEnemy(selection) {
-    const caveMonsters = monsters.filter(monster => monster.place === "cave");
-    const lairMonsters = monsters.filter(monster => monster.place === "dragon lair");
+async function goLair() {
+    text.innerText = "You enter the dragon's lair...";
+    await sleep(1000);
+    const lairMonsters = monsters.filter(monster => monster.place === "dragon lair");;
     const randNumber = Math.floor(Math.random() * 101);
-    if (selection === "cave") {
-        if (randNumber < caveMonsters[0].spawn) {
-            fightSlime()
-        } else if (randNumber < caveMonsters[1].spawn) {
-            fightBeast()
-        } else {
-            figthFlyingBeast()
-        }
-    } else {
-        if (randNumber < lairMonsters[0].spawn) {
-            //fightSkelleton()
-        } else if (randNumber < lairMonsters[1].spawn) {
-            fightBasilisk()
-        } else {
-            text.innerText = lairMonsters[2].name
-        }
+    if (randNumber < lairMonsters[0].spawn || killedSkelleton === false) {
+        fightSkelleton()
+        killedSkelleton = true
+    } else if (randNumber < lairMonsters[1].spawn && killedSkelleton === true || killedBasilisk === false) {
+        fightBasilisk()
+        killedBasilisk = true
+    } else if (randNumber < lairMonsters[2].spawn && killedBasilisk === true) {
+        fightDragon()
     }
 }
+
 async function goCave() {
     //update(locations[2]);
     text.innerText = "You enter the cave...";
-    await sleep(1500);
+    await sleep(1000);
     const caveMonsters = monsters.filter(monster => monster.place === "cave");
     const randNumber = Math.floor(Math.random() * 101);
-    if (randNumber < caveMonsters[0].spawn) {
+    if (randNumber < caveMonsters[0].spawn || killedSlime === false) {
         fightSlime()
-    } else if (randNumber < caveMonsters[1].spawn) {
+        killedSlime = true
+    } else if (randNumber < caveMonsters[1].spawn && killedSlime === true || killedBeast === false) {
         fightBeast()
-    } else {
+        killedBeast = true
+    } else if (randNumber < caveMonsters[2].spawn && killedBeast === true) {
         figthFlyingBeast()
+        killedFlying = true
     }
 }
 
@@ -329,7 +337,14 @@ function defeatMonster() {
 }
 
 function lose() {
+    killedSlime = false
+    killedBeast = false
+    killedFlying = false
+    killedBasilisk = false
+    killedSkelleton = false
+
     update(locations[5]);
+
 }
 
 function winGame() {
