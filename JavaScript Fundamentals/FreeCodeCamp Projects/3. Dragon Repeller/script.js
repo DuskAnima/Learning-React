@@ -5,16 +5,22 @@ let currentWeapon = 0;
 let fighting;
 let monsterHealth;
 let inventory = ["stick"];
+let magic = [
+    {name: 'fire', get: true},
+    {name: 'thunder', get: true},
+    {name: 'earthquake', get: false}
+];
 
-let killedSlime = false
-let killedBeast = false
-let killedFlying = false
-let killedBasilisk = false
-let killedSkelleton = false
+let killedSlime = false;
+let killedBeast = false;
+let killedFlying = false;
+let killedBasilisk = false;
+let killedSkelleton = false;
 
 const button1 = document.querySelector('#button1');
 const button2 = document.querySelector("#button2");
 const button3 = document.querySelector("#button3");
+const button4 = document.createElement("button"); // 4th button, auxiliar.
 const text = document.querySelector("#text");
 const xpText = document.querySelector("#xpText");
 const healthText = document.querySelector("#healthText");
@@ -43,7 +49,7 @@ const monsters = [
         level: 2,
         health: 15,
         damage: ["attack"], // damage = can receive damage
-        weakness: ["fire", "thunder", "ice", "earthquake"], // weakness = is weak to (x1.5 dmg)
+        weakness: ["fire", "thunder", "earthquake"], // weakness = is weak to (x1.5 dmg)
         spawn: 50,
         place: "cave"
     },
@@ -51,8 +57,8 @@ const monsters = [
         name: "fanged beast",
         level: 4,
         health: 70,
-        damage: ["attack", "ice"],
-        weakness: ["fire", "earthquake"],
+        damage: ["attack", "fire"],
+        weakness: ["earthquake", "thunder"],
         spawn: 80,
         place: "cave"
     },
@@ -68,7 +74,7 @@ const monsters = [
     {
         name: "skelleton",
         level: 16,
-        health: 80,
+        health: 280,
         damage: ["attack", "thunder", "ice", "earthquake"],
         weakness: ["fire"],
         spawn: 50,
@@ -77,7 +83,7 @@ const monsters = [
     {
         name: "basilisk",
         level: 22,
-        health: 150,
+        health: 450,
         damage: ["attack"],
         weakness: ["earthquake"],
         spawn: 80,
@@ -86,7 +92,7 @@ const monsters = [
     {
         name: "dragon",
         level: 35,
-        health: 500,
+        health: 1000,
         damage: ["attack"],
         weakness: [],
         spawn: 100,
@@ -108,15 +114,15 @@ const locations = [
         text: "You enter the store."
     },
     {
-        name: "cave",
-        "button text": ["Fight slime", "Fight fanged beast", "Go to town square"],
+        name: "spell",
+        get "button text"() { return showSpells();},
         "button functions": [fightSlime, fightBeast, goTown],
-        text: "You enter the cave. You see some monsters."
+        text: "Choose a spell."
     },
     {
         name: "fight",
-        "button text": ["Attack", "Dodge", "Run"],
-        "button functions": [attack, dodge, goTown],
+        "button text": ["Attack", "Spell", "Run"],
+        "button functions": [attack, useMagic, goTown],
         text: "You are fighting a monster."
     },
     {
@@ -161,6 +167,7 @@ function update(location) {
     text.innerHTML = location.text;
 
 }
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -171,25 +178,9 @@ function goTown() {
 
 function goStore() {
     update(locations[1]);
-}
+}    
 
-async function goLair() {
-    text.innerText = "You enter the dragon's lair...";
-    await sleep(1000);
-    const lairMonsters = monsters.filter(monster => monster.place === "dragon lair");;
-    const randNumber = Math.floor(Math.random() * 101);
-    if (randNumber < lairMonsters[0].spawn || killedSkelleton === false) {
-        fightSkelleton()
-        killedSkelleton = true
-    } else if (randNumber < lairMonsters[1].spawn && killedSkelleton === true || killedBasilisk === false) {
-        fightBasilisk()
-        killedBasilisk = true
-    } else if (randNumber < lairMonsters[2].spawn && killedBasilisk === true) {
-        fightDragon()
-    }
-}
-
-async function goCave() {
+async function goCave() { // Chooses a random enemy from the cave, but it needs to, at least, have 1 encounter whit the weakest enemy.
     //update(locations[2]);
     text.innerText = "You enter the cave...";
     await sleep(1000);
@@ -207,6 +198,22 @@ async function goCave() {
     }
 }
 
+async function goLair() { // Chooses a random enemy from the lair, but it needs to, at least, have 1 encounter whit the weakest enemy.
+    text.innerText = "You enter the dragon's lair...";
+    await sleep(1000); 
+    const lairMonsters = monsters.filter(monster => monster.place === "dragon lair");
+    const randNumber = Math.floor(Math.random() * 101);
+    if (randNumber < lairMonsters[0].spawn || killedSkelleton === false) {
+        fightSkelleton()
+        killedSkelleton = true
+    } else if (randNumber < lairMonsters[1].spawn && killedSkelleton === true || killedBasilisk === false) {
+        fightBasilisk()
+        killedBasilisk = true
+    } else if (randNumber < lairMonsters[2].spawn && killedBasilisk === true) {
+        fightDragon()
+    }    
+}    
+
 function buyHealth() {
     if (gold >= 10) {
         gold -= 10;
@@ -215,6 +222,47 @@ function buyHealth() {
         healthText.innerText = health;
     } else {
         text.innerText = "You do not have enough gold to buy health.";
+    }
+}
+
+function getMagic() { // set spells from de array magic "true", this is based on the enemy defeated.
+    if (defeatMonster()) {
+        let newSpell = magic[fighting];
+        newSpell.get = true;
+    } else if (lose()) {
+        for (let spell of magic) {
+            spell.get = false
+        }
+    } else { // do nothing.
+    }
+}
+
+function showSpells() {
+    return magic.filter(spell => spell.get).map(spell => spell.name) || ["No spells available"];
+}
+
+function useMagic(spell) {
+    update(locations[2]) //enters the spell menu
+
+
+    text.innerText = "The " + monsters[fighting].name + " attacks.";
+    text.innerText += " You attack it with your " + weapons[currentWeapon].name + ".";
+    health -= getMonsterAttackValue(monsters[fighting].level);
+    if (isMonsterHit()) {
+        monsterHealth -= weapons[currentWeapon].power + Math.floor(Math.random() * xp) + 1;
+    } else {
+        text.innerText += " You miss.";
+    }
+    healthText.innerText = health;
+    monsterHealthText.innerText = monsterHealth;
+    if (health <= 0) {
+        lose();
+    } else if (monsterHealth <= 0) {
+        if (fighting === monsters.length - 1) {
+            winGame();
+        } else {
+            defeatMonster();
+        }
     }
 }
 
