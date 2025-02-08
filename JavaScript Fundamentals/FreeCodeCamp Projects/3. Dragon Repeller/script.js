@@ -158,30 +158,45 @@ function goStore() {
     update(locations[1]);
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function randEnemy(selection) {
     const caveMonsters = monsters.filter(monster => monster.place === "cave");
     const lairMonsters = monsters.filter(monster => monster.place === "dragon lair");
     const randNumber = Math.floor(Math.random() * 101);
     if (selection === "cave") {
         if (randNumber < caveMonsters[0].spawn) {
-            text.innerText = caveMonsters[0].name
+            fightSlime()
         } else if (randNumber < caveMonsters[1].spawn) {
-            text.innerText = caveMonsters[1].name
+            fightBeast()
         } else {
-            text.innerText = caveMonsters[2].name
+            figthFlyingBeast()
         }
     } else {
         if (randNumber < lairMonsters[0].spawn) {
-            text.innerText = lairMonsters[0].name
+            //fightSkelleton()
         } else if (randNumber < lairMonsters[1].spawn) {
-            text.innerText = lairMonsters[1].name
+            fightBasilisk()
         } else {
             text.innerText = lairMonsters[2].name
         }
     }
 }
-function goCave() {
-    update(locations[2]);
+async function goCave() {
+    //update(locations[2]);
+    text.innerText = "You enter the cave...";
+    await sleep(1500);
+    const caveMonsters = monsters.filter(monster => monster.place === "cave");
+    const randNumber = Math.floor(Math.random() * 101);
+    if (randNumber < caveMonsters[0].spawn) {
+        fightSlime()
+    } else if (randNumber < caveMonsters[1].spawn) {
+        fightBeast()
+    } else {
+        figthFlyingBeast()
+    }
 }
 
 function buyHealth() {
@@ -238,17 +253,17 @@ function fightBeast() {
 }
 
 function figthFlyingBeast() {
-    fighting = 3;
+    fighting = 2;
     goFight();
 }
 
 function fightSkelleton() {
-    fighting = 4;
+    fighting = 3;
     goFight();
 }
 
-function fightWerewolf() {
-    fighting = 5;
+function fightBasilisk() {
+    fighting = 4;
     goFight();
 }
 
