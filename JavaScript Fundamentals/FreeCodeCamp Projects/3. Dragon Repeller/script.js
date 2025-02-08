@@ -164,14 +164,17 @@ function update(location) {
     button2.onclick = location["button functions"][1];
     button3.onclick = location["button functions"][2];
     text.innerHTML = location.text;
-
+    if (location.name === "fight"){
+        monsterStats.style.display = "block";
+    }
 }
 
-function button4(text, func){
+function button4(text, callback){
     const button4 = document.createElement("button"); // 4th button, auxiliar.
     const controls = document.getElementById("controls"); 
     button4.innerText = text;
-    controls.appendChild(button4)
+    controls.appendChild(button4);
+    button4.addEventListener("click", callback);
 }
 
 function sleep(ms) {
@@ -231,7 +234,7 @@ function buyHealth() {
     }
 }
 
-function getMagic() { // set spells from de array magic "true", this is based on the enemy defeated.
+function getMagic() { // Set spells from de array magic "true", this is based on the enemy defeated.
     if (defeatMonster()) {
         let newSpell = magic[fighting];
         newSpell.get = true;
@@ -244,16 +247,17 @@ function getMagic() { // set spells from de array magic "true", this is based on
 }
 
 function showSpells() {
-    // Mapeamos todos los hechizos, y si están disponibles (get: true), asignamos su nombre, si no, asignamos "No spell"
+    // Spell mapping if get: true. Else, "No spell"
     let availableSpells = magic.map(spell => spell.get === true ? spell.name : "No spell");
-    // Asignamos el arreglo a los botones correspondientes
+    // Spell assignment
     locations[2]["button text"] = availableSpells;
-    button4("go back")
+    button4("go back", () => update(locations[3]));
 }
 
 function useMagic(spell) {
-    showSpells()
+    showSpells();
     update(locations[2]) //enters the spell menu
+    monsterStats.style.display = "block";
 
     text.innerText = "The " + monsters[fighting].name + " attacks.";
     text.innerText += " You attack it with your " + weapons[currentWeapon].name + ".";
