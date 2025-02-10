@@ -6,9 +6,9 @@ let fighting;
 let monsterHealth;
 let inventory = ["stick"];
 let magic = [
-    {name: 'fireball', get: false},
-    {name: 'thundershock', get: false},
-    {name: 'earthquake', get: false}
+    { name: 'fireball', get: false },
+    { name: 'thundershock', get: false },
+    { name: 'earthquake', get: false }
 ];
 
 let killedSlime = false;
@@ -41,14 +41,14 @@ const weapons = [
 
 /*
 name, level, health, damage, weakness, spawn, place
-*/
+0.slime, 1.fanged beast, 2. winged beast, 3. skelleton, 4.basilisk, 5.dragon*/
 const monsters = [
     {
         name: "slime",
         level: 2,
         health: 15,
         damage: ["attack"], // damage = can receive damage
-        weakness: ["fire", "thunder", "earthquake"], // weakness = is weak to (x1.5 dmg)
+        weakness: ["attack", "fire", "thunder", "earthquake"], // weakness = is weak to (x1.5 dmg)
         spawn: 50,
         place: "cave"
     },
@@ -99,6 +99,8 @@ const monsters = [
     }
 ]
 
+/*name, button text, button functions, text
+0.town square, 1.store, 2.spell, 3. fight, 4.kill monster, 5.lose, 6.win, 7.easter egg*/
 const locations = [
     {
         name: "town square",
@@ -155,7 +157,26 @@ button1.onclick = goStore;
 button2.onclick = goCave;
 button3.onclick = goLair;
 
-function update(location) {
+// General functions
+
+function button4(text, callback) {
+    const button4 = document.createElement("button"); // 4th button, auxiliar.
+    const controls = document.getElementById("controls");
+    button4.innerText = text;
+    controls.appendChild(button4);
+    button4.addEventListener("click", () => {
+        if (typeof callback === "function") {
+            callback();
+        }
+        button4.remove();
+    })
+}
+
+function sleep(ms) { // to use this function in another, that function has to be async
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function update(location) { // Object that storages all different screens of the interface 
     monsterStats.style.display = "none";
     button1.innerText = location["button text"][0];
     button2.innerText = location["button text"][1];
@@ -164,22 +185,12 @@ function update(location) {
     button2.onclick = location["button functions"][1];
     button3.onclick = location["button functions"][2];
     text.innerHTML = location.text;
-    if (location.name === "fight"){
+    if (location.name === "fight") {
         monsterStats.style.display = "block";
     }
 }
 
-function button4(text, callback){
-    const button4 = document.createElement("button"); // 4th button, auxiliar.
-    const controls = document.getElementById("controls"); 
-    button4.innerText = text;
-    controls.appendChild(button4);
-    button4.addEventListener("click", callback);
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+// rendering Screens
 
 function goTown() {
     update(locations[0]);
@@ -187,7 +198,17 @@ function goTown() {
 
 function goStore() {
     update(locations[1]);
-}    
+}
+
+function goFight() {
+    update(locations[3]);
+    monsterHealth = monsters[fighting].health;
+    monsterStats.style.display = "block";
+    monsterName.innerText = monsters[fighting].name;
+    monsterHealthText.innerText = monsterHealth;
+}
+
+// enemy randomizer
 
 async function goCave() { // Chooses a random enemy from the cave, but it needs to, at least, have 1 encounter whit the weakest enemy.
     //update(locations[2]);
@@ -209,7 +230,7 @@ async function goCave() { // Chooses a random enemy from the cave, but it needs 
 
 async function goLair() { // Chooses a random enemy from the lair, but it needs to, at least, have 1 encounter whit the weakest enemy.
     text.innerText = "You enter the dragon's lair...";
-    await sleep(1000); 
+    await sleep(1000);
     const lairMonsters = monsters.filter(monster => monster.place === "dragon lair");
     const randNumber = Math.floor(Math.random() * 101);
     if (randNumber < lairMonsters[0].spawn || killedSkelleton === false) {
@@ -220,8 +241,10 @@ async function goLair() { // Chooses a random enemy from the lair, but it needs 
         killedBasilisk = true
     } else if (randNumber < lairMonsters[2].spawn && killedBasilisk === true) {
         fightDragon()
-    }    
-}    
+    }
+}
+
+// store functions
 
 function buyHealth() {
     if (gold >= 10) {
@@ -231,52 +254,6 @@ function buyHealth() {
         healthText.innerText = health;
     } else {
         text.innerText = "You do not have enough gold to buy health.";
-    }
-}
-
-function getMagic() { // Set spells from de array magic "true", this is based on the enemy defeated.
-    if (defeatMonster()) {
-        let newSpell = magic[fighting];
-        newSpell.get = true;
-    } else if (lose()) {
-        for (let spell of magic) {
-            spell.get = false
-        }
-    } else { // do nothing.
-    }
-}
-
-function showSpells() {
-    // Spell mapping if get: true. Else, "No spell"
-    let availableSpells = magic.map(spell => spell.get === true ? spell.name : "No spell");
-    // Spell assignment
-    locations[2]["button text"] = availableSpells;
-    button4("go back", () => update(locations[3]));
-}
-
-function useMagic(spell) {
-    showSpells();
-    update(locations[2]) //enters the spell menu
-    monsterStats.style.display = "block";
-
-    text.innerText = "The " + monsters[fighting].name + " attacks.";
-    text.innerText += " You attack it with your " + weapons[currentWeapon].name + ".";
-    health -= getMonsterAttackValue(monsters[fighting].level);
-    if (isMonsterHit()) {
-        monsterHealth -= weapons[currentWeapon].power + Math.floor(Math.random() * xp) + 1;
-    } else {
-        text.innerText += " You miss.";
-    }
-    healthText.innerText = health;
-    monsterHealthText.innerText = monsterHealth;
-    if (health <= 0) {
-        lose();
-    } else if (monsterHealth <= 0) {
-        if (fighting === monsters.length - 1) {
-            winGame();
-        } else {
-            defeatMonster();
-        }
     }
 }
 
@@ -312,49 +289,84 @@ function sellWeapon() {
     }
 }
 
-function fightSlime() {
-    fighting = 0;
-    goFight();
+// magic functions
+
+function getMagic() { // Set spells from de array magic "true", this is based on the enemy defeated.
+    if (defeatMonster()) {
+        let newSpell = magic[fighting];
+        newSpell.get = true;
+    } else if (lose()) {
+        for (let spell of magic) {
+            spell.get = false
+        }
+    } else { // do nothing.
+    }
 }
 
-function fightBeast() {
-    fighting = 1;
-    goFight();
+function showSpells() { // Spells are visible only if they are available
+    // Spell mapping if get: true. Else, "No spell"
+    let availableSpells = magic.map(spell => spell.get === true ? spell.name : "No spell");
+    // Spell assignment
+    locations[2]["button text"] = availableSpells;
+    button4("go back", () => update(locations[3]));
 }
 
-function figthFlyingBeast() {
-    fighting = 2;
-    goFight();
-}
-
-function fightSkelleton() {
-    fighting = 3;
-    goFight();
-}
-
-function fightBasilisk() {
-    fighting = 4;
-    goFight();
-}
-
-function fightDragon() {
-    fighting = monsters.length - 1;
-    goFight();
-}
-
-function goFight() {
-    update(locations[3]);
-    monsterHealth = monsters[fighting].health;
-    monsterStats.style.display = "block";
-    monsterName.innerText = monsters[fighting].name;
+function useMagic(spell) {
+    showSpells();
+    update(locations[2]) //enters the spell menu
+    monsterStats.style.display = "block"; // makes sure the monster's stats are visible
+    text.innerText = "The " + monsters[fighting].name + " attacks.";
+    text.innerText += " You attack it with your " + weapons[currentWeapon].name + ".";
+    health -= getMonsterAttackValue(monsters[fighting].level);
+    if (isMonsterHit()) {
+        monsterHealth -= weapons[currentWeapon].power + Math.floor(Math.random() * xp) + 1;
+    } else {
+        text.innerText += " You miss.";
+    }
+    healthText.innerText = health;
     monsterHealthText.innerText = monsterHealth;
+    if (health <= 0) {
+        lose();
+    } else if (monsterHealth <= 0) {
+        if (fighting === monsters.length - 1) {
+            winGame();
+        } else {
+            defeatMonster();
+        }
+    }
 }
+
+function fire() { // make functions for magic
+    text.innerText = "The " + monsters[fighting].name + " attacks.";
+    text.innerText += " You attack it with your fire magic.";
+    health -= getMonsterAttackValue(monsters[fighting].level);
+    if (isMonsterHit()) {
+        monsterHealth -= Math.floor(Math.random() * xp)
+    }
+}
+
+function weaknessDmg() { // make function for weakness system
+    if (magic.some(m => monsters[fighting].weakness.includes(m.name)) || monsters[fighting].weakness.includes("attack")) {
+        console.log("true damage!")
+        return true;
+    }
+    return false;
+}
+
+function resistanceDmg() { // make function for resistance system
+
+}
+
+// combat functions
 
 function attack() {
     text.innerText = "The " + monsters[fighting].name + " attacks.";
     text.innerText += " You attack it with your " + weapons[currentWeapon].name + ".";
     health -= getMonsterAttackValue(monsters[fighting].level);
-    if (isMonsterHit()) {
+    if (isMonsterHit() && weaknessDmg()) {
+        monsterHealth -= (weapons[currentWeapon].power + Math.floor(Math.random() * xp) + 1) * 1.5;
+        text.innerText += "A critical strike!"
+    } else if (isMonsterHit()) {
         monsterHealth -= weapons[currentWeapon].power + Math.floor(Math.random() * xp) + 1;
     } else {
         text.innerText += " You miss.";
@@ -386,10 +398,6 @@ function isMonsterHit() {
     return Math.random() > .2 || health < 20;
 }
 
-function dodge() {
-    text.innerText = "You dodge the attack from the " + monsters[fighting].name;
-}
-
 function defeatMonster() {
     gold += Math.floor(monsters[fighting].level * 6.7);
     xp += monsters[fighting].level;
@@ -397,6 +405,12 @@ function defeatMonster() {
     xpText.innerText = xp;
     update(locations[4]);
 }
+
+function dodge() {  // Deprecated function, replaced for spells, could add later, maybe.
+    text.innerText = "You dodge the attack from the " + monsters[fighting].name;
+}
+
+// Metafunctions
 
 function lose() {
     killedSlime = false
@@ -424,6 +438,8 @@ function restart() {
     xpText.innerText = xp;
     goTown();
 }
+
+// Easter Egg
 
 function easterEgg() {
     update(locations[7]);
@@ -458,4 +474,36 @@ function pick(guess) {
             lose();
         }
     }
+}
+
+// Enemy functions
+
+function fightSlime() {
+    fighting = 0;
+    goFight();
+}
+
+function fightBeast() {
+    fighting = 1;
+    goFight();
+}
+
+function figthFlyingBeast() {
+    fighting = 2;
+    goFight();
+}
+
+function fightSkelleton() {
+    fighting = 3;
+    goFight();
+}
+
+function fightBasilisk() {
+    fighting = 4;
+    goFight();
+}
+
+function fightDragon() {
+    fighting = monsters.length - 1;
+    goFight();
 }
