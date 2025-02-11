@@ -311,7 +311,6 @@ function sellWeapon() {
 function getMagic() { // Set spells from de array magic "true", this is based on the enemy defeated.
     if (defeated === true) {
         magic[fighting].get = true;
-        return;
     }
 }
 
