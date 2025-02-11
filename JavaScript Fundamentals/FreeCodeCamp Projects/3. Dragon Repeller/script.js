@@ -1,15 +1,17 @@
-let xp = 0;
-let health = 100;
+let xp = 500;
+let health = 500;
 let gold = 50;
 let currentWeapon = 0;
 let fighting;
 let monsterHealth;
 let inventory = ["stick"];
 let magic = [
-    { name: 'fireball', get: false },
-    { name: 'thundershock', get: false },
-    { name: 'earthquake', get: false }
+    { name: 'fire', get: false },
+    { name: 'earthquake', get: false },
+    { name: 'thunder', get: false },
 ];
+
+let defeated = false;
 
 let killedSlime = false;
 let killedBeast = false;
@@ -76,7 +78,7 @@ const monsters = [
         health: 280,
         damage: ["attack", "thunder", "ice", "earthquake"],
         weakness: ["fire"],
-        spawn: 50,
+        spawn: 35,
         place: "dragon lair"
     },
     {
@@ -85,7 +87,7 @@ const monsters = [
         health: 450,
         damage: ["attack"],
         weakness: ["earthquake"],
-        spawn: 80,
+        spawn: 70,
         place: "dragon lair"
     },
     {
@@ -217,14 +219,29 @@ async function goCave() { // Chooses a random enemy from the cave, but it needs 
     const caveMonsters = monsters.filter(monster => monster.place === "cave");
     const randNumber = Math.floor(Math.random() * 101);
     if (randNumber < caveMonsters[0].spawn || killedSlime === false) {
-        fightSlime()
-        killedSlime = true
+        fightSlime();
+        if (defeated === true) {
+            killedSlime = true;
+            getMagic();
+            defeated = false;
+        }
     } else if (randNumber < caveMonsters[1].spawn && killedSlime === true || killedBeast === false) {
         fightBeast()
-        killedBeast = true
+        if (defeated === true) {
+            killedBeast = true;
+            getMagic();
+            defeated = false;
+        }
     } else if (randNumber < caveMonsters[2].spawn && killedBeast === true) {
         figthFlyingBeast()
-        killedFlying = true
+        if (defeated === true) {
+            killedFlying = true;
+            getMagic();
+            defeated = false;
+        }
+    } else {
+        text.innerText = "You found 40 gold, how lucky!"
+        gold += 40
     }
 }
 
@@ -292,14 +309,9 @@ function sellWeapon() {
 // magic functions
 
 function getMagic() { // Set spells from de array magic "true", this is based on the enemy defeated.
-    if (defeatMonster()) {
-        let newSpell = magic[fighting];
-        newSpell.get = true;
-    } else if (lose()) {
-        for (let spell of magic) {
-            spell.get = false
-        }
-    } else { // do nothing.
+    if (defeated === true) {
+        magic[fighting].get = true;
+        return;
     }
 }
 
@@ -315,25 +327,6 @@ function useMagic(spell) {
     showSpells();
     update(locations[2]) //enters the spell menu
     monsterStats.style.display = "block"; // makes sure the monster's stats are visible
-    text.innerText = "The " + monsters[fighting].name + " attacks.";
-    text.innerText += " You attack it with your " + weapons[currentWeapon].name + ".";
-    health -= getMonsterAttackValue(monsters[fighting].level);
-    if (isMonsterHit()) {
-        monsterHealth -= weapons[currentWeapon].power + Math.floor(Math.random() * xp) + 1;
-    } else {
-        text.innerText += " You miss.";
-    }
-    healthText.innerText = health;
-    monsterHealthText.innerText = monsterHealth;
-    if (health <= 0) {
-        lose();
-    } else if (monsterHealth <= 0) {
-        if (fighting === monsters.length - 1) {
-            winGame();
-        } else {
-            defeatMonster();
-        }
-    }
 }
 
 function fire() { // make functions for magic
@@ -403,6 +396,7 @@ function defeatMonster() {
     xp += monsters[fighting].level;
     goldText.innerText = gold;
     xpText.innerText = xp;
+    defeated = true
     update(locations[4]);
 }
 
@@ -418,7 +412,9 @@ function lose() {
     killedFlying = false
     killedBasilisk = false
     killedSkelleton = false
-
+    for (let spell of magic) {
+        spell.get = false
+    }
     update(locations[5]);
 
 }
