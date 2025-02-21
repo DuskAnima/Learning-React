@@ -9,11 +9,6 @@ function getRandomCharacter(characters) {
     return color;
 }
 
-function getRandomIndex() {
-    const randomIndex = Math.floor(darkColorsArr.length * Math.random());
-    return randomIndex;
-}
-
 const body = document.querySelector("body");
 const bgHexCodeSpanElement = document.querySelector("#bg-hex-code");
 
